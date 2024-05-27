@@ -11,7 +11,6 @@ class StableDiffusionModel(Enum):
 
 
 class Upscaler(Enum):
-    NO_UPSCALE = ""
     X2 = "stabilityai/sd-x2-latent-upscaler"
     X4 = "stabilityai/stable-diffusion-x4-upscaler"
 
@@ -21,7 +20,10 @@ upscalers = {}
 
 def get_upscaler(model: Upscaler):
     if model not in upscalers:
-        upscalers[model] = StableDiffusionLatentUpscalePipeline.from_pretrained(model.value)
+        if model == Upscaler.X2:
+            upscalers[model] = StableDiffusionLatentUpscalePipeline(model.value)
+        elif model == Upscaler.X4:
+            upscalers[model] = StableDiffusionUpscalePipeline(model.value)
     return upscalers[model]
 
 
