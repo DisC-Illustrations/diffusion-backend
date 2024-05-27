@@ -1,0 +1,125 @@
+openapi: 3.0.1
+info:
+  title: Artificial Illustrations Image Generation API
+  version: 1.0.0
+paths:
+  /generate:
+    post:
+      summary: Generate images based on the provided prompt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                prompt:
+                  type: string
+                  description: The prompt for image generation
+                negative_prompt:
+                  type: string
+                  description: The negative prompt to avoid certain elements in the image
+                  default: "text, watermarks"
+                num_images:
+                  type: integer
+                  description: The number of images to generate
+                  default: 1
+                image_size:
+                  type: integer
+                  description: The size of the image (in pixels)
+                  default: 1024
+                aspect_ratio:
+                  type: number
+                  description: The aspect ratio of the image (width/height)
+                  default: 1.0
+                steps:
+                  type: integer
+                  description: The number of steps for image generation
+                  default: 25
+                model:
+                  type: string
+                  description: The model ID to use for generation
+                  default: "stabilityai/stable-diffusion-xl-base-1.0"
+                upscale:
+                  type: integer
+                  description: The upscale factor for the generated image
+                  default: 1
+                  oneOf:
+                    - type: integer
+                      enum: [ 1, 2, 4 ]
+      responses:
+        '200':
+          description: Images generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  images:
+                    type: array
+                    items:
+                      type: string
+                      description: Base64 encoded image
+        '400':
+          description: Invalid model ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+components:
+  schemas:
+    ImageGenerationRequest:
+      type: object
+      properties:
+        prompt:
+          type: string
+          description: The prompt for image generation
+        negative_prompt:
+          type: string
+          description: The negative prompt to avoid certain elements in the image
+          default: "text, watermarks"
+        num_images:
+          type: integer
+          description: The number of images to generate
+          default: 1
+        image_size:
+          type: integer
+          description: The size of the image (in pixels)
+          default: 1024
+        aspect_ratio:
+          type: number
+          description: The aspect ratio of the image (width/height)
+          default: 1.0
+        steps:
+          type: integer
+          description: The number of steps for image generation
+          default: 25
+        model:
+          type: string
+          description: The model ID to use for generation
+          default: "stabilityai/stable-diffusion-xl-base-1.0"
+        upscale:
+          type: integer
+          description: The upscale factor for the generated image
+          default: 1
+          oneOf:
+            - type: integer
+              enum: [ 1, 2, 4 ]
+    ImageGenerationResponse:
+      type: object
+      properties:
+        images:
+          type: array
+          items:
+            type: string
+            description: Base64 encoded image
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
