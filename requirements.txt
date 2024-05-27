@@ -1,0 +1,2 @@
+torch~=2.4.0.dev20240522
+diffusers~=0.27.2
