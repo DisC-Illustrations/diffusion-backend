@@ -31,6 +31,6 @@ def generate_image():
         except ValueError:
             return jsonify({"error": "Invalid model ID"}), 400
 
-    images = diffuser[model].generate_image(prompt, num_images, width, height, steps)
+    images = diffuser[model].generate_image(prompt, num_images, width, height, steps, upscale)
 
     return jsonify({"images": [image.to_base64() for image in images]})
