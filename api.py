@@ -11,6 +11,7 @@ diffuser = {
 @app.route("/generate", methods=["POST"])
 def generate_image():
     prompt = request.json["prompt"]
+    negative_prompt = request.json.get("negative_prompt", "text, watermarks")
     num_images = request.json.get("num_images", 1)
     image_size = request.json.get("image_size", 1024)
     aspect_ratio = request.json.get("aspect_ratio", 1.0)
@@ -31,6 +32,8 @@ def generate_image():
         except ValueError:
             return jsonify({"error": "Invalid model ID"}), 400
 
-    images = diffuser[model].generate_image(prompt, num_images, width, height, steps, upscale)
+    images = (diffuser[model]
+              .generate_image(prompt, negative_prompt, num_images,
+                              width, height, steps, upscale))
 
     return jsonify({"images": [image.to_base64() for image in images]})
