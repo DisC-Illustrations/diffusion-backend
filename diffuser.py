@@ -11,14 +11,14 @@ class StableDiffusionModel(Enum):
 
 
 class Diffuser:
-    def __init__(self, model_id: str = StableDiffusionModel.STABLE_DIFFUSION_1_5.value):
+    def __init__(self, model_id: str = StableDiffusionModel.STABLE_DIFFUSION_XL.value):
         self.model_id = model_id
         self.pipeline = self.initialize_pipeline(model_id)
 
     @classmethod
     def from_model(cls, model: StableDiffusionModel):
         instance = cls(model.value)
-        instance.pipeline = instance.initialize_pipeline(model)
+        instance.pipeline = instance.initialize_pipeline(model.value)
         return instance
 
     def initialize_pipeline(self, model_id: str):
