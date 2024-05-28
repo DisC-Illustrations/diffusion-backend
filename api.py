@@ -17,8 +17,9 @@ def generate_image():
     aspect_ratio = request.json.get("aspect_ratio", 1.0)
     steps = request.json.get("steps", 25)
     model = request.json.get("model", StableDiffusionModel.STABLE_DIFFUSION_XL.value)
-    upscale = request.json.get("upscale", 0)
+    upscale = request.json.get("upscale", 1)
 
+    # Calculate the width and height based on the aspect ratio
     if aspect_ratio > 1:
         width = image_size
         height = int(image_size / aspect_ratio)
@@ -26,14 +27,17 @@ def generate_image():
         width = int(image_size * aspect_ratio)
         height = image_size
 
+    # Initialize the diffuser if it doesn't exist
     if model not in diffuser:
         try:
             diffuser[model] = Diffuser.from_model(StableDiffusionModel(model))
         except ValueError:
             return jsonify({"error": "Invalid model ID"}), 400
 
+    # Generate the images
     images = (diffuser[model]
               .generate_image(prompt, negative_prompt, num_images,
                               width, height, steps, upscale))
 
+    # Return the images as base64 encoded strings
     return jsonify({"images": [image.to_base64() for image in images]})

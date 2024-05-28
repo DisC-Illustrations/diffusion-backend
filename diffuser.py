@@ -24,6 +24,7 @@ def get_upscaler(model: Upscaler):
             upscalers[model] = StableDiffusionLatentUpscalePipeline(model.value)
         elif model == Upscaler.X4:
             upscalers[model] = StableDiffusionUpscalePipeline(model.value)
+
     return upscalers[model]
 
 
@@ -40,10 +41,11 @@ class Diffuser:
     def from_model(cls, model: StableDiffusionModel):
         instance = cls(model.value)
         instance.pipeline = initialize_pipeline(model.value)
+
         return instance
 
     def generate_image(self, prompt, negative_prompt="text, watermarks",
-                       num_images=1, width=1024, height=1024, steps=25, upscale=0):
+                       num_images=1, width=1024, height=1024, steps=25, upscale=1):
         images = self.pipeline(
             prompt=prompt,
             negative_prompt=negative_prompt,
@@ -52,6 +54,7 @@ class Diffuser:
             num_images=num_images,
             num_inference_steps=steps)["images"]
 
+        # apply upscaling
         if upscale == 2:
             scaler = get_upscaler(Upscaler.X2)
             high_res_images = scaler(images, num_images_per_prompt=num_images)["images"]

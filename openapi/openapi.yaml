@@ -2,6 +2,9 @@ openapi: 3.0.1
 info:
   title: Artificial Illustrations Image Generation API
   version: 1.0.0
+  description: This API generates images based on the provided prompt using the Stable Diffusion model
+servers:
+    - url: http://localhost:5000
 paths:
   /generate:
     post:
