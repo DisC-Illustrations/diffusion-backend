@@ -8,6 +8,7 @@ class StableDiffusionModel(Enum):
     STABLE_DIFFUSION_2_1 = "stabilityai/stable-diffusion-2-1"
     STABLE_DIFFUSION_1_4 = "CompVis/stable-diffusion-v1-4"
     STABLE_DIFFUSION_XL = "stabilityai/stable-diffusion-xl-base-1.0"
+    STABLE_DIFFUSION_3_MEDIUM = "stabilityai/stable-diffusion-3-medium"
 
 
 class Upscaler(Enum):
