@@ -1,7 +1,6 @@
 import io
-
+import base64
 from flask import Flask, request, jsonify
-
 from diffuser import Diffuser, StableDiffusionModel
 
 app = Flask(__name__)
@@ -9,20 +8,20 @@ diffuser = {
     StableDiffusionModel.STABLE_DIFFUSION_XL.value: Diffuser(),
 }
 
-
 def convert_images(images, image_type="PNG", compression_ratio=0.9):
     converted_images = []
     for image in images:
         image_bytes = io.BytesIO()
         if image_type == "JPEG":
-            image.save(image_bytes, format="JPEG", quality=compression_ratio * 100)
+            image.save(image_bytes, format="JPEG", quality=int(compression_ratio * 100))
         else:
             image.save(image_bytes, format=image_type)
         image_bytes.seek(0)
-        converted_images.append(image_bytes)
+        # Encode the BytesIO object to a base64 string
+        image_base64 = base64.b64encode(image_bytes.read()).decode('utf-8')
+        converted_images.append(image_base64)
 
     return converted_images
-
 
 @app.route("/generate", methods=["POST"])
 def generate_image():
@@ -57,4 +56,4 @@ def generate_image():
 
     converted_images = convert_images(images)
 
-    return jsonify({"images": [image for image in converted_images]})
+    return jsonify({"images": converted_images})
