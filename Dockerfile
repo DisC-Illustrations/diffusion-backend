@@ -13,9 +13,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application code into the container
 COPY . .
 
+# Set the environment variable
+ENV FLASK_APP=api.py
+
 # Expose any ports the app is expected to run on
 EXPOSE 5000  
 
 # Command to run your script
-# CMD ["python", "app.py"]
-CMD [ "python3", "-m" , "flask", "run", "--host=0.0.0.0"]
+CMD [ "python3", "-m" , "flask", "run", "--host=0.0.0.0", "--port=5000"]
