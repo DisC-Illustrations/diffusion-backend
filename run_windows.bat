@@ -10,4 +10,4 @@ call venv\Scripts\activate.bat
 
 REM Ausführen des Python-Skripts
 echo Führe Python-Skript aus...
-python .\program.py
+python .\app.py

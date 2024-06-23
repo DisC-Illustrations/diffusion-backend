@@ -12,4 +12,4 @@ source venv/bin/activate
 
 # Ausführen des Python-Skripts
 echo "Führe Python-Skript aus..."
-python path/to/your_script.py
+python ./app.py
