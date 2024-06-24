@@ -42,6 +42,7 @@ def upscale_images(images, model: Upscaler, pipeline: DiffusionPipeline, num_ima
 
 
 def initialize_pipeline(model_id: str):
+    print(f"Cuda available: {torch.cuda.is_available()}")
     device = "cpu"
     if torch.backends.mps.is_available():
         device = "mps"
