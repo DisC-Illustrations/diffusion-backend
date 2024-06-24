@@ -1,18 +1,23 @@
-import io
 import base64
+import io
+import os
+
 from flask import Flask, request, jsonify
-from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy
+
 from diffuser import Diffuser, StableDiffusionModel
 
 app = Flask(__name__)
 CORS(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db/images.db'
+
+if not os.path.exists(os.path.join(os.path.dirname(__file__), 'db')):
+    os.makedirs(os.path.join(os.path.dirname(__file__), 'db'))
+
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'db', 'images.sqlite')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-diffuser = {
-    StableDiffusionModel.STABLE_DIFFUSION_XL.value: Diffuser(),
-}
 
 
 class GeneratedImage(db.Model):
@@ -26,19 +31,25 @@ class GeneratedImage(db.Model):
         return f'<GeneratedImage {self.id}>'
 
 
+with app.app_context():
+    db.create_all()
+
+
 def convert_images(images, image_type="PNG", compression_ratio=0.9):
     converted_images = []
-    for image in images:
+    for i, image in enumerate(images):
         image_bytes = io.BytesIO()
         if image_type == "JPEG":
             image.save(image_bytes, format="JPEG", quality=int(compression_ratio * 100))
         else:
             image.save(image_bytes, format=image_type)
         image_bytes.seek(0)
-        # Encode the BytesIO object to a base64 string
-        image_base64 = base64.b64encode(image_bytes.read()).decode('utf-8')
+        image_data = image_bytes.getvalue()
+        print(f"Image {i+1} byte size: {len(image_data)}")
+        image_base64 = base64.b64encode(image_data).decode('utf-8')
+        print(f"Image {i+1} base64 size: {len(image_base64)}")
+        print(f"Image {i+1} base64 preview: {image_base64[:80]}...")
         converted_images.append(image_base64)
-
     return converted_images
 
 
@@ -62,16 +73,16 @@ def generate_image():
         height = image_size
 
     # Initialize the diffuser if it doesn't exist
-    if model not in diffuser:
-        try:
-            diffuser[model] = Diffuser.from_model(StableDiffusionModel(model))
-        except ValueError:
-            return jsonify({"error": "Invalid model ID"}), 400
+    diffuser = Diffuser.from_model(StableDiffusionModel(model))
 
     # Generate the images
-    images = (diffuser[model]
+    images = (diffuser
               .generate_image(prompt, negative_prompt, num_images,
                               width, height, steps, upscale))
+
+    print(f"Generierte Bilder: {len(images)}")
+    for i, img in enumerate(images):
+        print(f"Bild {i + 1} Größe: {img.size}, Mode: {img.mode}")
 
     converted_images = convert_images(images)
 
@@ -79,6 +90,7 @@ def generate_image():
     # Save the images to the database
     for image in converted_images:
         decoded_image = base64.b64decode(image)
+        print(f"Decoded image size: {len(decoded_image)}")
         new_image = GeneratedImage(image=decoded_image, prompt=prompt, negative_prompt=negative_prompt)
         saved_images.append(new_image)
         db.session.add(new_image)
@@ -89,6 +101,9 @@ def generate_image():
     result_pairs = [{"id": image.id, "image": image_base64} for image, image_base64 in
                     zip(saved_images, converted_images)]
 
+    # Clear the pipeline and free up memory
+    del diffuser
+
     return jsonify(result_pairs)
 
 
@@ -98,5 +113,15 @@ def get_image(image_id):
     if image is None:
         return jsonify({"error": "Image not found"}), 404
 
+    print(f"Retrieved image size: {len(image.image)}")
     image_base64 = base64.b64encode(image.image).decode('utf-8')
+    print(f"Retrieved image base64 size: {len(image_base64)}")
+    print(f"Retrieved image base64 preview: {image_base64[:50]}...")
     return jsonify({"id": image.id, "image": image_base64, "prompt": image.prompt})
+
+
+@app.route("/images", methods=["GET"])
+def get_images():
+    images = GeneratedImage.query.all()
+    ids = [{"id": image.id} for image in images]
+    return jsonify(ids)
