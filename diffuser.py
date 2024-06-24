@@ -1,9 +1,9 @@
 from enum import Enum
+
 import numpy as np
-from PIL import Image
-from diffusers import DiffusionPipeline, StableDiffusionUpscalePipeline, StableDiffusionLatentUpscalePipeline
-from diffusers import AutoencoderKL
 import torch
+from PIL import Image, ImageOps
+from diffusers import DiffusionPipeline, StableDiffusionUpscalePipeline, StableDiffusionLatentUpscalePipeline
 
 
 class StableDiffusionModel(Enum):
@@ -37,6 +37,7 @@ def upscale_images(images, model: Upscaler, pipeline: DiffusionPipeline, prompt:
         print(f"Upscaled image {i + 1}: Size={high_res_image.size}, Mode={high_res_image.mode}")
         high_res_images.append(high_res_image)
         torch.cuda.empty_cache()  # Leere den CUDA-Cache nach jedem Bild
+        torch.mps.empty_cache()  # Leere den MPS-Cache nach jedem Bild
 
     return high_res_images
 
@@ -53,6 +54,37 @@ def initialize_pipeline(model_id: str):
     pipeline.enable_attention_slicing()
     pipeline.enable_vae_slicing()
     return pipeline
+
+
+def process_image(img):
+    # invert colors (this is a bug with this generation pipeline)
+    if isinstance(img, Image.Image):
+        inverted_img = ImageOps.invert(img.convert("RGB"))
+    else:
+        inverted_img = ImageOps.invert(Image.fromarray(img))
+
+    # here you can add more image processing steps
+    # for example, applying a given color palette
+    """
+    palette = [
+        255, 0, 0,    # Rot
+        0, 255, 0,    # Grün
+        0, 0, 255,    # Blau
+        255, 255, 0,  # Gelb
+        255, 0, 255,  # Magenta
+        0, 255, 255,  # Cyan
+        255, 255, 255,# Weiß
+        0, 0, 0       # Schwarz
+    ]
+    
+    # convert the image to a palette image
+    palette_image = image.convert("P", palette=Image.ADAPTIVE, colors=8)
+    
+    # apply the palette
+    palette_image.putpalette(palette)
+    """
+
+    return inverted_img
 
 
 class Diffuser:
@@ -90,10 +122,10 @@ class Diffuser:
 
         if upscale in [2, 4]:
             upscaler = Upscaler.X2 if upscale == 2 else Upscaler.X4
-            high_res_images = upscale_images(images, upscaler, self.pipeline, num_images, prompt)
+            high_res_images = upscale_images(images, upscaler, self.pipeline, prompt)
         else:
             high_res_images = images
 
-        # high_res_images = [process_image(img) for img in high_res_images]
+        high_res_images = [process_image(img) for img in high_res_images]
 
         return high_res_images

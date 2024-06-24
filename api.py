@@ -39,16 +39,20 @@ def convert_images(images, image_type="PNG", compression_ratio=0.9):
     converted_images = []
     for i, image in enumerate(images):
         image_bytes = io.BytesIO()
+
         if image_type == "JPEG":
             image.save(image_bytes, format="JPEG", quality=int(compression_ratio * 100))
         else:
             image.save(image_bytes, format=image_type)
+
         image_bytes.seek(0)
         image_data = image_bytes.getvalue()
         print(f"Image {i+1} byte size: {len(image_data)}")
+
         image_base64 = base64.b64encode(image_data).decode('utf-8')
         print(f"Image {i+1} base64 size: {len(image_base64)}")
         print(f"Image {i+1} base64 preview: {image_base64[:80]}...")
+
         converted_images.append(image_base64)
     return converted_images
 
@@ -79,10 +83,6 @@ def generate_image():
     images = (diffuser
               .generate_image(prompt, negative_prompt, num_images,
                               width, height, steps, upscale))
-
-    print(f"Generierte Bilder: {len(images)}")
-    for i, img in enumerate(images):
-        print(f"Bild {i + 1} Größe: {img.size}, Mode: {img.mode}")
 
     converted_images = convert_images(images)
 
