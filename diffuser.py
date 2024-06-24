@@ -17,7 +17,7 @@ class Upscaler(Enum):
     X4 = "stabilityai/stable-diffusion-x4-upscaler"
 
 
-def upscale_images(images, model: Upscaler, pipeline: DiffusionPipeline, num_images: int, prompt: str):
+def upscale_images(images, model: Upscaler, pipeline: DiffusionPipeline, prompt: str):
     if isinstance(images, list):
         images = np.array(images)
 
@@ -49,14 +49,7 @@ def initialize_pipeline(model_id: str):
     elif torch.cuda.is_available():
         device = "cuda"
 
-    dtype = torch.float32
-    if device == "cuda":
-        dtype = torch.float16
-
-    pipeline = DiffusionPipeline.from_pretrained(model_id, torch_dtype=dtype, use_safetensors=True).to(device)
-    if model_id == StableDiffusionModel.STABLE_DIFFUSION_XL.value and device == "cuda":
-        vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
-        pipeline.vae = vae
+    pipeline = DiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float32, use_safetensors=True).to(device)
     pipeline.enable_attention_slicing()
     pipeline.enable_vae_slicing()
     return pipeline
