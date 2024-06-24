@@ -48,12 +48,12 @@ def initialize_pipeline(model_id: str):
     elif torch.cuda.is_available():
         device = "cuda"
 
-    dtype = torch.float16
-    if device == "mps":
-        dtype = torch.float32
+    dtype = torch.float32
+    if device == "cuda":
+        dtype = torch.float16
 
     pipeline = DiffusionPipeline.from_pretrained(model_id, torch_dtype=dtype, use_safetensors=True).to(device)
-    if model_id == StableDiffusionModel.STABLE_DIFFUSION_XL.value and device != "mps":
+    if model_id == StableDiffusionModel.STABLE_DIFFUSION_XL.value and device == "cuda":
         vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
         pipeline.vae = vae
     pipeline.enable_attention_slicing()
