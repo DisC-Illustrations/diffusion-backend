@@ -56,33 +56,24 @@ def initialize_pipeline(model_id: str):
     return pipeline
 
 
-def process_image(img):
+def process_image(img, palette):
     # invert colors (this is a bug with this generation pipeline)
     if isinstance(img, Image.Image):
         inverted_img = ImageOps.invert(img.convert("RGB"))
     else:
         inverted_img = ImageOps.invert(Image.fromarray(img))
 
-    # here you can add more image processing steps
-    # for example, applying a given color palette
-    """
-    palette = [
-        255, 0, 0,    # Rot
-        0, 255, 0,    # Grün
-        0, 0, 255,    # Blau
-        255, 255, 0,  # Gelb
-        255, 0, 255,  # Magenta
-        0, 255, 255,  # Cyan
-        255, 255, 255,# Weiß
-        0, 0, 0       # Schwarz
-    ]
+    # apply palette
+    '''    
+    if palette is None or not isinstance(palette, list):
+        raise ValueError("Palette must be a list of color dictionaries with 'rgb' keys")
+
+    flat_palette = [value for color in palette for value in color['rgb']]
+
+    palette_image = img.convert("P", palette=Image.ADAPTIVE, colors=(len(palette)))
     
-    # convert the image to a palette image
-    palette_image = image.convert("P", palette=Image.ADAPTIVE, colors=8)
-    
-    # apply the palette
-    palette_image.putpalette(palette)
-    """
+    palette_image.putpalette(flat_palette)
+    '''
 
     return inverted_img
 
@@ -96,7 +87,7 @@ class Diffuser:
     def from_model(cls, model: StableDiffusionModel):
         return cls(model.value)
 
-    def generate_image(self, prompt, negative_prompt="text, watermarks",
+    def generate_image(self, prompt, color_palette, negative_prompt="text, watermarks",
                        num_images=1, width=512, height=512, steps=25, upscale=1):
         images = self.pipeline(
             prompt=prompt,
@@ -126,6 +117,6 @@ class Diffuser:
         else:
             high_res_images = images
 
-        high_res_images = [process_image(img) for img in high_res_images]
+        high_res_images = [process_image(img, color_palette) for img in high_res_images]
 
         return high_res_images
