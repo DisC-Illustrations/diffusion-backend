@@ -17,6 +17,16 @@ class Upscaler(Enum):
     X4 = "stabilityai/stable-diffusion-x4-upscaler"
 
 
+def clear_caches():
+    # clear CUDA if it is available
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.ipc_collect()
+        torch.cuda.ipc_collect()
+    elif torch.backends.mps.is_available():
+        torch.mps.empty_cache()
+
+
 def upscale_images(images, model: Upscaler, pipeline: DiffusionPipeline, prompt: str):
     if isinstance(images, list):
         images = np.array(images)
@@ -36,8 +46,7 @@ def upscale_images(images, model: Upscaler, pipeline: DiffusionPipeline, prompt:
                                   prompt=prompt, output_type="pil").images[0]
         print(f"Upscaled image {i + 1}: Size={high_res_image.size}, Mode={high_res_image.mode}")
         high_res_images.append(high_res_image)
-        torch.cuda.empty_cache()  # Leere den CUDA-Cache nach jedem Bild
-        torch.mps.empty_cache()  # Leere den MPS-Cache nach jedem Bild
+        clear_caches()
 
     return high_res_images
 
@@ -64,18 +73,16 @@ def process_image(img, palette):
         inverted_img = ImageOps.invert(Image.fromarray(img))
 
     # apply palette
-    '''    
     if palette is None or not isinstance(palette, list):
-        raise ValueError("Palette must be a list of color dictionaries with 'rgb' keys")
+        return inverted_img
 
     flat_palette = [value for color in palette for value in color['rgb']]
 
-    palette_image = img.convert("P", palette=Image.ADAPTIVE, colors=(len(palette)))
-    
-    palette_image.putpalette(flat_palette)
-    '''
+    palette_image = inverted_img.convert("P", palette=Image.ADAPTIVE, colors=(len(palette)))
 
-    return inverted_img
+    palette_image.putpalette(flat_palette)
+
+    return palette_image
 
 
 class Diffuser:
@@ -116,6 +123,8 @@ class Diffuser:
             high_res_images = upscale_images(images, upscaler, self.pipeline, prompt)
         else:
             high_res_images = images
+
+        clear_caches()
 
         high_res_images = [process_image(img, color_palette) for img in high_res_images]
 
