@@ -73,6 +73,7 @@ def process_image(img, palette):
         inverted_img = ImageOps.invert(Image.fromarray(img))
 
     # apply palette
+    """
     if palette is None or not isinstance(palette, list):
         return inverted_img
 
@@ -81,8 +82,9 @@ def process_image(img, palette):
     palette_image = inverted_img.convert("P", palette=Image.ADAPTIVE, colors=(len(palette)))
 
     palette_image.putpalette(flat_palette)
+    """
 
-    return palette_image
+    return inverted_img
 
 
 class Diffuser:
