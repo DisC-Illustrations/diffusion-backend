@@ -69,19 +69,6 @@ def generate_image():
     upscale = request.json.get("upscale", 1)
     color_palette = request.json.get("color_palette", [])
 
-    if not color_palette:
-        # Default palette if none provided
-        color_palette = [
-            {"rgb": [255, 0, 0]},
-            {"rgb": [0, 255, 0]},
-            {"rgb": [0, 0, 255]},
-            {"rgb": [111, 0, 111]},
-            {"rgb": [0, 111, 0]},
-            {"rgb": [111, 11, 11]},
-            {"rgb": [0, 0, 0]},
-            {"rgb": [0, 0, 0]}
-]
-
     # Calculate the width and height based on the aspect ratio
     if aspect_ratio > 1:
         width = image_size

@@ -70,6 +70,19 @@ def initialize_pipeline(model_id: str):
     return pipeline
 
 
+def apply_palette(img: Image.Image, palette: list) -> Image.Image:
+    print(palette)
+    if not palette:  # Handle empty or None palette
+        return img
+    
+    flat_palette = [value for color in palette for value in color]
+
+    palette_image = img.convert("P", palette=Image.ADAPTIVE, colors=len(palette))
+    palette_image.putpalette(flat_palette)
+    
+    return palette_image
+
+
 def process_image(img, palette, is_upscaled: bool = False):
     # invert image because of bug in CUDA implementation of the upscalers
     if is_upscaled and torch.cuda.is_available():
@@ -77,17 +90,8 @@ def process_image(img, palette, is_upscaled: bool = False):
             img = ImageOps.invert(img.convert("RGB"))
         else:
             img = ImageOps.invert(Image.fromarray(img))
-    # apply palette
-    """
-    if palette is None or not isinstance(palette, list):
-        return inverted_img
-
-    flat_palette = [value for color in palette for value in color['rgb']]
-
-    palette_image = inverted_img.convert("P", palette=Image.ADAPTIVE, colors=(len(palette)))
-
-    palette_image.putpalette(flat_palette)
-    """
+    
+    img = apply_palette(img, palette)
 
     return img
 
@@ -128,12 +132,12 @@ class Diffuser:
             print(f"Image {i + 1}: Size={img.size}, Mode={img.mode}")
 
         is_upscaled: bool = False
-        if upscale in [2, 4]:
-            upscaler = Upscaler.X2 if upscale == 2 else Upscaler.X4
-            high_res_images = upscale_images(images, upscaler, self.pipeline, prompt)
-            is_upscaled = True
-        else:
-            high_res_images = images
+        # if upscale in [2, 4]:
+        #     upscaler = Upscaler.X2 if upscale == 2 else Upscaler.X4
+        #     high_res_images = upscale_images(images, upscaler, self.pipeline, prompt)
+        #     is_upscaled = True
+        # else:
+        high_res_images = images
 
         high_res_images = [process_image(img, color_palette, is_upscaled) for img in high_res_images]
 
