@@ -2,8 +2,8 @@ from enum import Enum
 
 import numpy as np
 import torch
-from PIL import Image, ImageOps
 from diffusers import DiffusionPipeline, StableDiffusionUpscalePipeline, StableDiffusionLatentUpscalePipeline
+from PIL import Image, ImageOps
 
 
 class StableDiffusionModel(Enum):
@@ -23,8 +23,12 @@ def clear_caches():
         torch.cuda.empty_cache()
         torch.cuda.ipc_collect()
         torch.cuda.ipc_collect()
+        print("Cleared CUDA cache")
     elif torch.backends.mps.is_available():
         torch.mps.empty_cache()
+        print("Cleared MPS cache")
+    else:
+        print("No cache to clear")
 
 
 def upscale_images(images, model: Upscaler, pipeline: DiffusionPipeline, prompt: str):
@@ -34,9 +38,9 @@ def upscale_images(images, model: Upscaler, pipeline: DiffusionPipeline, prompt:
     high_res_images = []
     upscaler = None
     if model == Upscaler.X2:
-        upscaler = StableDiffusionLatentUpscalePipeline.from_pretrained(model.value, torch_dtype=torch.float16)
+        upscaler = StableDiffusionLatentUpscalePipeline.from_pretrained(model.value, torch_dtype=torch.float32)
     elif model == Upscaler.X4:
-        upscaler = StableDiffusionUpscalePipeline.from_pretrained(model.value, torch_dtype=torch.float16)
+        upscaler = StableDiffusionUpscalePipeline.from_pretrained(model.value, torch_dtype=torch.float32)
 
     upscaler.to(pipeline.device)
     upscaler.enable_attention_slicing()
@@ -52,7 +56,6 @@ def upscale_images(images, model: Upscaler, pipeline: DiffusionPipeline, prompt:
 
 
 def initialize_pipeline(model_id: str):
-    print(f"Cuda available: {torch.cuda.is_available()}")
     device = "cpu"
     if torch.backends.mps.is_available():
         device = "mps"
@@ -66,12 +69,6 @@ def initialize_pipeline(model_id: str):
 
 
 def process_image(img, palette):
-    # invert colors (this is a bug with this generation pipeline)
-    if isinstance(img, Image.Image):
-        inverted_img = ImageOps.invert(img.convert("RGB"))
-    else:
-        inverted_img = ImageOps.invert(Image.fromarray(img))
-
     # apply palette
     """
     if palette is None or not isinstance(palette, list):
@@ -84,7 +81,7 @@ def process_image(img, palette):
     palette_image.putpalette(flat_palette)
     """
 
-    return inverted_img
+    return img
 
 
 class Diffuser:
