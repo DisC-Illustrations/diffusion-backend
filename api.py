@@ -68,6 +68,8 @@ def generate_image():
     model = request.json.get("model", StableDiffusionModel.STABLE_DIFFUSION_XL.value)
     upscale = request.json.get("upscale", 1)
     color_palette = request.json.get("color_palette", [])
+    palette_strategy = request.json.get("palette_strategy", "")
+
 
     # Calculate the width and height based on the aspect ratio
     if aspect_ratio > 1:
@@ -83,7 +85,7 @@ def generate_image():
     # Generate the images
     images = (diffuser
               .generate_image(prompt, color_palette, negative_prompt, num_images,
-                              width, height, steps, upscale))
+                              width, height, steps, upscale, palette_strategy))
 
     converted_images = convert_images(images)
 

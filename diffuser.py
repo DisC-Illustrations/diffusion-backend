@@ -5,6 +5,8 @@ import torch
 from PIL import Image, ImageOps
 from diffusers import DiffusionPipeline, StableDiffusionUpscalePipeline, StableDiffusionLatentUpscalePipeline
 
+from palette_strategy import PaletteApplicationStrategy, PaletteApplier, InterpolatedPaletteStrategy, DirectPaletteStrategy, PosterizationStrategy
+
 
 class StableDiffusionModel(Enum):
     STABLE_DIFFUSION_1_5 = "runwayml/stable-diffusion-v1-5"
@@ -70,20 +72,7 @@ def initialize_pipeline(model_id: str):
     return pipeline
 
 
-def apply_palette(img: Image.Image, palette: list) -> Image.Image:
-    print(palette)
-    if not palette:  # Handle empty or None palette
-        return img
-
-    flat_palette = [value for color in palette for value in color]
-
-    palette_image = img.convert("P", palette=Image.ADAPTIVE, colors=len(palette))
-    palette_image.putpalette(flat_palette)
-
-    return palette_image
-
-
-def process_image(img, palette, is_upscaled: bool = False):
+def process_image(img, palette, palette_strategy, is_upscaled: bool = False):
     # invert image because of bug in CUDA implementation of the upscalers
     if is_upscaled and torch.cuda.is_available():
         if isinstance(img, Image.Image):
@@ -91,8 +80,12 @@ def process_image(img, palette, is_upscaled: bool = False):
         else:
             img = ImageOps.invert(Image.fromarray(img))
 
-    img = apply_palette(img, palette)
-
+    # Apply color palette only if both palette and strategy_name are provided
+    if palette and palette_strategy:
+        print(f"Applying palette with strategy: {palette_strategy}")
+        palette_strategy_class = PaletteApplicationStrategy.create_strategy(palette_strategy)
+        applier = PaletteApplier(palette_strategy_class)
+        img = applier.apply_palette(img, palette)
     return img
 
 
@@ -106,7 +99,7 @@ class Diffuser:
         return cls(model.value)
 
     def generate_image(self, prompt, color_palette=None, negative_prompt="text, watermarks",
-                       num_images=1, width=512, height=512, steps=25, upscale=1):
+                       num_images=1, width=512, height=512, steps=25, upscale=1, palette_strategy: str = ''):
         images = self.pipeline(
             prompt=prompt,
             negative_prompt=negative_prompt,
@@ -139,7 +132,8 @@ class Diffuser:
         else:
             high_res_images = images
 
-        high_res_images = [process_image(img, color_palette, is_upscaled) for img in high_res_images]
+        print(f"Generating image with palette strategy: {palette_strategy}")
+        high_res_images = [process_image(img, color_palette, palette_strategy, is_upscaled) for img in high_res_images]
 
         clear_caches()
         if torch.cuda.is_available():
