@@ -142,6 +142,7 @@ class Diffuser:
         high_res_images = [process_image(img, color_palette, is_upscaled) for img in high_res_images]
 
         clear_caches()
-        torch.cuda.ipc_collect()
+        if torch.cuda.is_available():
+            torch.cuda.ipc_collect()
 
         return high_res_images
