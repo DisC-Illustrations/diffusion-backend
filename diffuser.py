@@ -23,6 +23,7 @@ def clear_caches():
     # clear CUDA if it is available
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
+        torch.cuda.ipc_collect()
         print("Cleared CUDA cache")
     elif torch.backends.mps.is_available():
         torch.mps.empty_cache()
@@ -136,7 +137,5 @@ class Diffuser:
         high_res_images = [process_image(img, color_palette, palette_strategy, is_upscaled) for img in high_res_images]
 
         clear_caches()
-        if torch.cuda.is_available():
-            torch.cuda.ipc_collect()
 
         return high_res_images

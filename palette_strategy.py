@@ -2,6 +2,7 @@ from PIL import Image
 from abc import ABC, abstractmethod
 import numpy as np
 
+
 # Abstract base class defining the interface for palette application strategies
 class PaletteApplicationStrategy(ABC):
     @abstractmethod
@@ -21,6 +22,7 @@ class PaletteApplicationStrategy(ABC):
             'PosterizationStrategy': PosterizationStrategy
         }
         return strategies.get(strategy_name, DirectPaletteStrategy)()
+
 
 # Strategy 1: Applies a color palette using an interpolated gradient
 class InterpolatedPaletteStrategy(PaletteApplicationStrategy):
@@ -57,6 +59,7 @@ class InterpolatedPaletteStrategy(PaletteApplicationStrategy):
         """Map grayscale values to the new palette using the gradient map."""
         return gradient_map[grayscale_np]
 
+
 # Strategy 2: Applies a color palette using direct mapping
 class DirectPaletteStrategy(PaletteApplicationStrategy):
     def apply_palette(self, img: Image.Image, palette: list) -> Image.Image:
@@ -71,7 +74,8 @@ class DirectPaletteStrategy(PaletteApplicationStrategy):
         palette_image.putpalette(flat_palette)
 
         return palette_image
-    
+
+
 class PosterizationStrategy(PaletteApplicationStrategy):
     def apply_palette(self, img: Image.Image, palette: list) -> Image.Image:
         """Apply a color palette to the image using posterization method."""

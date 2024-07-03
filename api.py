@@ -70,7 +70,6 @@ def generate_image():
     color_palette = request.json.get("color_palette", [])
     palette_strategy = request.json.get("palette_strategy", "")
 
-
     # Calculate the width and height based on the aspect ratio
     if aspect_ratio > 1:
         width = image_size

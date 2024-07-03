@@ -23,7 +23,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ImageGenerationResponse'
         '400':
-          description: Invalid model ID
+          description: Invalid request parameters
           content:
             application/json:
               schema:
@@ -103,23 +103,37 @@ components:
           type: integer
           description: The upscale factor for the generated image
           default: 1
-          oneOf:
-            - type: integer
-              enum: [1, 2, 4]
-    ImageGenerationResponse:
-      type: object
-      properties:
-        images:
+          enum: [1, 2, 4]
+        color_palette:
           type: array
+          description: The color palette to apply to the generated image; if empty, no palette is applied
           items:
-            type: object
-            properties:
-              id:
-                type: number
-                description: Unique identifier for the image
-              image:
-                type: string
-                description: Base64 encoded PNG image
+            type: array
+            items:
+              type: integer
+              minimum: 0
+              maximum: 255
+          default: []
+        palette_strategy:
+          type: string
+          description: The strategy to apply the color palette
+          default: ""
+          enum:
+            - "InterpolatedPaletteStrategy"
+            - "DirectPaletteStrategy"
+            - "PosterizationStrategy"
+            - ""
+    ImageGenerationResponse:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: integer
+            description: Unique identifier for the image
+          image:
+            type: string
+            description: Base64 encoded PNG image
     GetImageResponse:
       type: object
       properties:
@@ -133,16 +147,13 @@ components:
           type: string
           description: The prompt used for generating the image
     GetImagesResponse:
-      type: object
-      properties:
-        ids:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: integer
-                description: Unique identifier for the image
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: integer
+            description: Unique identifier for the image
     ErrorResponse:
       type: object
       properties:
