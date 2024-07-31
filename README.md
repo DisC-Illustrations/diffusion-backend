@@ -7,7 +7,7 @@ Windows:
 ```bash
 python -m venv venv
 venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements.txt --user
 python app.py
 ```
 
@@ -17,7 +17,9 @@ MacOS/Linux:
 source run_mac.sh
 ```
 
-Umgebungsvariablen:
+Get the correct version of Pytorch here: https://pytorch.org/get-started/locally/
+
+## Environment variables
 
 - `OPENAI_API_KEY`: API key for OpenAI
 
