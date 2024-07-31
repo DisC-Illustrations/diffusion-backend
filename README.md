@@ -2,7 +2,24 @@
 
 ## Run the app
 
-TODO
+Windows:
+
+```bash
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+python app.py
+```
+
+MacOS/Linux:
+
+```bash
+source run_mac.sh
+```
+
+Umgebungsvariablen:
+
+- `OPENAI_API_KEY`: API key for OpenAI
 
 ## Docker
 
