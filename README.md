@@ -1,5 +1,9 @@
 # diffusion-backend
 
+## Run the app
+
+TODO
+
 ## Docker
 
 When using Docker, you can build the image with the following command:
