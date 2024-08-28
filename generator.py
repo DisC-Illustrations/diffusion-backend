@@ -1,3 +1,4 @@
+import gc
 from enum import Enum
 
 import numpy as np
@@ -5,13 +6,16 @@ import torch
 from PIL import Image, ImageOps
 from diffusers import DiffusionPipeline, StableDiffusionUpscalePipeline, StableDiffusionLatentUpscalePipeline
 
-from palette_strategy import PaletteApplicationStrategy, PaletteApplier, InterpolatedPaletteStrategy, DirectPaletteStrategy, PosterizationStrategy
+from generators.FluxFP8 import generate_images as flux_generate_images
+from generators.StableDiffusion import StableDiffusion
+from palette_strategy import PaletteApplicationStrategy, PaletteApplier
 
 
-class StableDiffusionModel(Enum):
+class DiffusionModel(Enum):
     STABLE_DIFFUSION_1_5 = "runwayml/stable-diffusion-v1-5"
     STABLE_DIFFUSION_XL = "stabilityai/stable-diffusion-xl-base-1.0"
     STABLE_DIFFUSION_3_MEDIUM = "stabilityai/stable-diffusion-3-medium"
+    FLUX_1_SCHNELL = "black-forest-labs/FLUX.1-schnell"
 
 
 class Upscaler(Enum):
@@ -30,9 +34,10 @@ def clear_caches():
         print("Cleared MPS cache")
     else:
         print("No cache to clear")
+    gc.collect()
 
 
-def upscale_images(images, model: Upscaler, pipeline: DiffusionPipeline, prompt: str):
+def upscale_images(images, model: Upscaler, device: str, prompt: str):
     if isinstance(images, list):
         images = np.array(images)
 
@@ -47,30 +52,17 @@ def upscale_images(images, model: Upscaler, pipeline: DiffusionPipeline, prompt:
     elif model == Upscaler.X4:
         upscaler = StableDiffusionUpscalePipeline.from_pretrained(model.value, torch_dtype=dtype)
 
-    upscaler.to(pipeline.device)
+    upscaler.to(device)
     upscaler.enable_attention_slicing()
 
     for i, image in enumerate(images):
-        high_res_image = upscaler(image=pipeline.numpy_to_pil(np.array(image)), num_inference_steps=20,
+        high_res_image = upscaler(image=upscaler.numpy_to_pil(np.array(image)), num_inference_steps=20,
                                   prompt=prompt, output_type="pil").images[0]
         print(f"Upscaled image {i + 1}: Size={high_res_image.size}, Mode={high_res_image.mode}")
         high_res_images.append(high_res_image)
         clear_caches()
 
     return high_res_images
-
-
-def initialize_pipeline(model_id: str):
-    device = "cpu"
-    if torch.backends.mps.is_available():
-        device = "mps"
-    elif torch.cuda.is_available():
-        device = "cuda"
-
-    pipeline = DiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float32, use_safetensors=True).to(device)
-    pipeline.enable_attention_slicing()
-    pipeline.enable_vae_slicing()
-    return pipeline
 
 
 def process_image(img, palette, palette_strategy, is_upscaled: bool = False):
@@ -90,25 +82,34 @@ def process_image(img, palette, palette_strategy, is_upscaled: bool = False):
     return img
 
 
-class Diffuser:
-    def __init__(self, model_id: str = StableDiffusionModel.STABLE_DIFFUSION_XL.value):
+class Generator:
+    def __init__(self, model_id: str = DiffusionModel.FLUX_1_SCHNELL.value):
         self.model_id = model_id
-        self.pipeline = initialize_pipeline(model_id)
 
     @classmethod
-    def from_model(cls, model: StableDiffusionModel):
+    def from_model(cls, model: DiffusionModel):
         return cls(model.value)
 
     def generate_image(self, prompt, color_palette=None, negative_prompt="text, watermarks",
                        num_images=1, width=512, height=512, steps=25, upscale=1, palette_strategy: str = ''):
-        images = self.pipeline(
-            prompt=prompt,
-            negative_prompt=negative_prompt,
-            width=width,
-            height=height,
-            num_images_per_prompt=num_images,
-            num_inference_steps=steps
-        ).images
+
+        device = "cpu"
+        if torch.backends.mps.is_available():
+            device = "mps"
+        elif torch.cuda.is_available():
+            device = "cuda"
+
+        # ==========================================================================
+        # temporary fix, since MPS does not support float8_e4m3fn
+        if self.model_id == DiffusionModel.FLUX_1_SCHNELL.value and device == "mps":
+            self.model_id = DiffusionModel.STABLE_DIFFUSION_XL.value
+        # ==========================================================================
+
+        if self.model_id == DiffusionModel.FLUX_1_SCHNELL.value:
+            images = flux_generate_images(prompt, width, height, steps, num_images, device)
+        else:
+            diffuser = StableDiffusion(self.model_id, device)
+            images = diffuser.generate_images(prompt, negative_prompt, width, height, steps, num_images)
 
         clear_caches()
 
@@ -128,7 +129,7 @@ class Diffuser:
         is_upscaled: bool = False
         if upscale in [2, 4]:
             upscaler = Upscaler.X2 if upscale == 2 else Upscaler.X4
-            high_res_images = upscale_images(images, upscaler, self.pipeline, prompt)
+            high_res_images = upscale_images(images, upscaler, device, prompt)
             is_upscaled = True
         else:
             high_res_images = images
