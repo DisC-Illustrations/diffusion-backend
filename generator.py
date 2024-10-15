@@ -4,7 +4,7 @@ from enum import Enum
 import numpy as np
 import torch
 from PIL import Image, ImageOps
-from diffusers import DiffusionPipeline, StableDiffusionUpscalePipeline, StableDiffusionLatentUpscalePipeline
+from diffusers import StableDiffusionUpscalePipeline, StableDiffusionLatentUpscalePipeline
 
 from generators.FluxFP8 import generate_images as flux_generate_images
 from generators.StableDiffusion import StableDiffusion
