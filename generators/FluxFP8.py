@@ -48,6 +48,8 @@ def generate_images(prompt: str, width: int = 1024, height: int = 1024, num_infe
         raise RuntimeError("Flux Pipeline is not initialized")
 
     print(f"Generating images with {bfl_repo}...")
+
+    prompt = prompt + ", no watermarks, no text"
     current_time = time.time()
     images = pipe(
         prompt,
