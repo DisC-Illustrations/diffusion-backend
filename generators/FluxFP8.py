@@ -16,7 +16,7 @@ def init_pipeline(device: str):
     print("Initializing Flux Pipeline. This may take a few minutes...")
     start_time = time.time()
     transformer = FluxTransformer2DModel.from_single_file(
-        "https://huggingface.co/Kijai/flux-fp8/blob/main/flux1-schnell-fp8.safetensors",
+        "https://huggingface.co/Kijai/flux-fp8/blob/main/flux1-schnell-fp8-e4m3fn.safetensors",
         torch_dtype=dtype, token=os.getenv("HF_TOKEN"))
     quantize(transformer, qfloat8)
     freeze(transformer)
