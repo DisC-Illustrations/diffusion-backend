@@ -1,9 +1,8 @@
-import time
 import os
-from typing import Optional
+import time
 
 import torch
-from diffusers import FluxTransformer2DModel, FluxPipeline, DiffusionPipeline
+from diffusers import FluxTransformer2DModel, FluxPipeline
 from optimum.quanto import freeze, qfloat8, quantize
 from transformers import T5EncoderModel
 
@@ -38,7 +37,7 @@ def init_pipeline(device: str):
     print(f"Initialized Flux Pipeline in {time.time() - start_time} seconds")
 
 
-def generate_images(prompt: str, width: int = 1024, height: int = 1024, num_inference_steps: int = 30,
+def generate_images(prompt: str, width: int = 1024, height: int = 1024, num_inference_steps: int = 15,
                     num_variations: int = 1, device: str = "cpu"):
     global pipe
     if pipe is None:
