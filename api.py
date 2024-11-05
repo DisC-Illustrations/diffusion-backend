@@ -6,7 +6,8 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 
-from generator import Generator, DiffusionModel
+from generator import Generator
+from models import DiffusionModel
 
 app = Flask(__name__)
 CORS(app)
@@ -65,8 +66,9 @@ def generate_image():
     image_size = request.json.get("image_size", 1024)
     aspect_ratio = request.json.get("aspect_ratio", 1.0)
     steps = request.json.get("steps", 25)
-    model = request.json.get("model", DiffusionModel.FLUX_1_SCHNELL.value)
+    # model = request.json.get("model", DiffusionModel.FLUX_1_SCHNELL.value)
     # model = request.json.get("model", DiffusionModel.STABLE_DIFFUSION_XL.value)
+    model = request.json.get("model", DiffusionModel.STABLE_DIFFUSION_3_5_MEDIUM.value)
     upscale = request.json.get("upscale", 1)
     color_palette = request.json.get("color_palette", [])
     palette_strategy = request.json.get("palette_strategy", "")

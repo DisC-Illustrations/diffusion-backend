@@ -8,15 +8,8 @@ from diffusers import StableDiffusionUpscalePipeline, StableDiffusionLatentUpsca
 
 from generators.FluxFP8 import generate_images as flux_generate_images
 from generators.StableDiffusion import StableDiffusion
+from models import DiffusionModel
 from palette_strategy import PaletteApplicationStrategy, PaletteApplier
-
-
-class DiffusionModel(Enum):
-    STABLE_DIFFUSION_1_5 = "runwayml/stable-diffusion-v1-5"
-    STABLE_DIFFUSION_XL = "stabilityai/stable-diffusion-xl-base-1.0"
-    STABLE_DIFFUSION_3_MEDIUM = "stabilityai/stable-diffusion-3-medium"
-    STABLE_DIFFUSION_3_5_MEDIUM = "stabilityai/stable-diffusion-3.5-medium"
-    FLUX_1_SCHNELL = "black-forest-labs/FLUX.1-schnell"
 
 
 class Upscaler(Enum):
