@@ -72,6 +72,7 @@ def generate_image():
     upscale = request.json.get("upscale", 1)
     color_palette = request.json.get("color_palette", [])
     palette_strategy = request.json.get("palette_strategy", "")
+    replicate_model = request.json.get("replicate_model", None)
 
     # Calculate the width and height based on the aspect ratio
     if aspect_ratio > 1:
@@ -82,7 +83,7 @@ def generate_image():
         height = image_size
 
     # Initialize the diffuser if it doesn't exist
-    diffuser = Generator.from_model(DiffusionModel(model))
+    diffuser = Generator.from_model(model=DiffusionModel(model), replicate_model=replicate_model)
 
     # Generate the images
     images = (diffuser

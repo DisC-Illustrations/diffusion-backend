@@ -85,7 +85,7 @@ class Generator:
         return cls(model.value)
 
     def generate_image(self, prompt, color_palette=None, negative_prompt="text, watermarks",
-                       num_images=1, width=512, height=512, steps=25, upscale=1, palette_strategy: str = ''):
+                       num_images=1, width=512, height=512, steps=25, upscale=1, palette_strategy: str = '', replicate_model=None):
 
         device = "cpu"
         if torch.backends.mps.is_available():
@@ -99,7 +99,10 @@ class Generator:
             self.model_id = DiffusionModel.STABLE_DIFFUSION_XL.value
         # ==========================================================================
 
-        if self.model_id == DiffusionModel.FLUX_1_SCHNELL.value:
+        if replicate_model:
+            # TODO: implement generation with replicate API
+            raise NotImplementedError("Replicate model is not supported yet")
+        elif self.model_id == DiffusionModel.FLUX_1_SCHNELL.value:
             images = flux_generate_images(prompt, width, height, steps, num_images, device)
         else:
             diffuser = StableDiffusion(self.model_id, device)
